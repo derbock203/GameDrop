@@ -368,6 +368,7 @@ async function loadMore(){
 }
 
 
+async function loadDetail(id){
   S.detailLoading=true;S.trailer=null;renderSheet();
   try{
     const[rd,rm]=await Promise.all([
