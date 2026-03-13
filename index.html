@@ -348,11 +348,10 @@ async function loadGames(){
   const now=new Date(),td=now.toISOString().split('T')[0];
   let dates,order;
   if(S.tab==='new'){const p=new Date(now);p.setDate(p.getDate()-120);dates=p.toISOString().split('T')[0]+','+td;order='-released';}
-  else if(S.tab==='recent'){const p=new Date(now);p.setDate(p.getDate()-30);dates=p.toISOString().split('T')[0]+','+td;order='-released';}
   else if(S.tab==='upcoming'){const f=new Date(now);f.setDate(f.getDate()+120);dates=td+','+f.toISOString().split('T')[0];order='released';}
   else{const p=new Date(now);p.setFullYear(p.getFullYear()-1);dates=p.toISOString().split('T')[0]+','+td;order='-metacritic';}
   const plats=S.platform==='all'?'4,187,186':PLAT[S.platform];
-  let url='https://api.rawg.io/api/games?key='+S.key+'&dates='+dates+'&ordering='+order+'&page_size=20&platforms='+plats;
+  let url='https://api.rawg.io/api/games?key='+S.key+'&dates='+dates+'&ordering='+order+'&page_size=40&platforms='+plats;
   if(S.query)url+='&search='+encodeURIComponent(S.query);
   try{const r=await fetch(url);if(!r.ok)throw new Error(r.status);const d=await r.json();S.games=d.results||[];}
   catch(e){S.games=[];}
@@ -431,7 +430,7 @@ function tplFilters(){
 }
 
 function tplTabs(){
-  const ts=[{k:'new',l:'NEUE'},{k:'recent',l:'ALTE'},{k:'upcoming',l:'BALD'},{k:'popular',l:'TOP'}];
+  const ts=[{k:'new',l:'NEUE'},{k:'upcoming',l:'BALD'},{k:'popular',l:'TOP'}];
   return '<div class="tabs">'+ts.map(t=>'<div class="tab '+(S.tab===t.k?'on':'')+'" data-t="'+t.k+'">'+t.l+'</div>').join('')+'</div>';
 }
 
