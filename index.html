@@ -577,19 +577,20 @@ function bindMain(){
   });
   document.querySelectorAll('.pill').forEach(b=>{b.addEventListener('click',()=>{S.platform=b.dataset.p;loadGames();});});
   document.querySelectorAll('.tab').forEach(t=>{t.addEventListener('click',()=>{S.tab=t.dataset.t;loadGames();});});
-  document.querySelectorAll('.card').forEach(c=>{
-    c.addEventListener('click',()=>{
-      const id=parseInt(c.dataset.id);
-      const g=S.games.find(x=>x.id===id);if(!g)return;
-      S.detail=g;S.trailer=null;
-      openSheetEl();renderSheet();loadDetail(id);
-    });
-  });
   document.querySelectorAll('.wish-btn').forEach(b=>{b.addEventListener('click',e=>{
+    e.stopPropagation();
     const id=parseInt(b.dataset.id);
     const g=S.games.find(x=>x.id===id)||S.wishlist.find(x=>x.id===id);
     if(g)toggleWish(g,e);
   });});
+  document.querySelectorAll('.card').forEach(c=>{
+    c.addEventListener('click',()=>{
+      const id=parseInt(c.dataset.id);
+      const g=S.games.find(x=>x.id===id)||S.wishlist.find(x=>x.id===id);if(!g)return;
+      S.detail=g;S.trailer=null;
+      openSheetEl();renderSheet();loadDetail(id);
+    });
+  });
   document.getElementById('mehr-btn')?.addEventListener('click',loadMore);
   document.getElementById('inst-btn')?.addEventListener('click',()=>{
     S.installPrompt?.prompt();
