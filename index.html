@@ -347,7 +347,7 @@ async function loadGames(){
   S.loading=true;render();
   const now=new Date(),td=now.toISOString().split('T')[0];
   let dates,order;
-  if(S.tab==='new'){const p=new Date(now);p.setDate(p.getDate()-45);dates=p.toISOString().split('T')[0]+','+td;order='-released';}
+  if(S.tab==='new'){const p=new Date(now);p.setDate(p.getDate()-120);dates=p.toISOString().split('T')[0]+','+td;order='-released';}
   else if(S.tab==='upcoming'){const f=new Date(now);f.setDate(f.getDate()+120);dates=td+','+f.toISOString().split('T')[0];order='released';}
   else{const p=new Date(now);p.setFullYear(p.getFullYear()-1);dates=p.toISOString().split('T')[0]+','+td;order='-metacritic';}
   const plats=S.platform==='all'?'4,187,186':PLAT[S.platform];
