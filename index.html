@@ -552,6 +552,7 @@ function bindMain(){
     });
   });
   document.getElementById('mehr-btn')?.addEventListener('click',loadMore);
+  document.getElementById('inst-btn')?.addEventListener('click',()=>{
     S.installPrompt?.prompt();
     S.installPrompt?.userChoice.then(()=>{S.installPrompt=null;render();});
   });
