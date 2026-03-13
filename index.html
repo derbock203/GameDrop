@@ -109,6 +109,9 @@
       border-bottom:2px solid transparent;transition:all .2s;
     }
     .tab.on{color:#a8d99e;border-bottom-color:var(--g2);text-shadow:0 0 8px rgba(53,104,45,0.6)}
+    .wish-btn{position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.55);border:none;color:rgba(255,255,255,0.35);font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;transition:color .2s,background .2s;}
+    .wish-btn.wished{color:#35682d;background:rgba(0,0,0,0.7);}
+    .card{position:relative;}
 
     /* ── Grid ── */
     .sec-hdr{padding:14px 16px 6px;font-family:var(--hf);font-size:11px;letter-spacing:2px;color:var(--td)}
@@ -334,7 +337,8 @@ const S={
   games:[],loading:false,query:'',platform:'all',tab:'new',
   detail:null,trailer:null,detailLoading:false,
   installPrompt:null,bannerDone:localStorage.getItem('bnd')==='1',
-  nextPage:null,loadingMore:false
+  nextPage:null,loadingMore:false,
+  wishlist:JSON.parse(localStorage.getItem('wishlist')||'[]')
 };
 
 // PWA
@@ -345,6 +349,7 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();S.installPr
 
 async function loadGames(){
   if(!S.key)return;
+  if(S.tab==='wishlist'){S.games=[];render();return;}
   S.loading=true;S.nextPage=null;S.loadingMore=false;render();
   const now=new Date(),td=now.toISOString().split('T')[0];
   let dates,order;
@@ -390,6 +395,17 @@ function platformBadges(platforms){
 }
 function stripHtml(s){const d=document.createElement('div');d.innerHTML=s;return d.textContent||'';}
 
+function toggleWish(g,e){
+  e.stopPropagation();
+  const idx=S.wishlist.findIndex(x=>x.id===g.id);
+  if(idx>=0)S.wishlist.splice(idx,1);
+  else S.wishlist.push({id:g.id,name:g.name,background_image:g.background_image,released:g.released,platforms:g.platforms,metacritic:g.metacritic});
+  localStorage.setItem('wishlist',JSON.stringify(S.wishlist));
+  render();
+  if(S.detail)renderSheet();
+}
+function isWished(id){return S.wishlist.some(x=>x.id===id);}
+
 function render(){
   const app=document.getElementById('app');
   if(!S.key){app.innerHTML=tplSetup();bindSetup();return;}
@@ -397,7 +413,9 @@ function render(){
     tplHeader()+
     (S.installPrompt&&!S.bannerDone?tplBanner():'')+
     tplFilters()+tplTabs()+
-    (S.loading?tplLoading():S.games.length?tplGrid():tplEmpty())+
+    (S.tab==='wishlist'
+      ? (S.wishlist.length?tplWishGrid():tplWishEmpty())
+      : (S.loading?tplLoading():S.games.length?tplGrid():tplEmpty()))+
     '<div class="pad"></div>'+
     '<div class="backdrop" id="bd" onclick="closeSheet()"></div>'+
     '<div class="sheet" id="sh"><div class="sheet-handle"></div>'+
@@ -440,9 +458,22 @@ function tplFilters(){
 }
 
 function tplTabs(){
-  const ts=[{k:'new',l:'NEUE'},{k:'upcoming',l:'BALD'},{k:'popular',l:'TOP'}];
+  const ts=[{k:'new',l:'NEUE'},{k:'upcoming',l:'BALD'},{k:'popular',l:'TOP'},{k:'wishlist',l:'♥ LISTE'}];
   return '<div class="tabs">'+ts.map(t=>'<div class="tab '+(S.tab===t.k?'on':'')+'" data-t="'+t.k+'">'+t.l+'</div>').join('')+'</div>';
 }
+
+function tplWishGrid(){
+  const cards=S.wishlist.map(g=>{
+    const hasImg=!!g.background_image;
+    const img=hasImg?'<img class="c-img" src="'+g.background_image+'" alt="" loading="lazy">':'<div class="c-ph">'+CTRL_IMG+'</div>';
+    const score=g.metacritic?'<div class="c-score '+scoreCls(g.metacritic)+'">'+g.metacritic+'</div>':'';
+    return '<div class="card'+(hasImg?'':' card-noimg')+'" data-id="'+g.id+'">'+img+
+      '<button class="wish-btn wished" data-id="'+g.id+'">♥</button>'+
+      '<div class="c-body"><div class="c-title">'+g.name+'</div><div class="c-date">'+fmtDate(g.released)+'</div><div class="badges">'+platformBadges(g.platforms)+'</div>'+score+'</div></div>';
+  }).join('');
+  return '<div class="sec-hdr">'+S.wishlist.length+' SPIELE AUF DER LISTE</div><div class="grid">'+cards+'</div>';
+}
+function tplWishEmpty(){return '<div class="empty"><div class="empty-ico">'+CTRL_IMG+'</div><div class="empty-ttl">KEINE SPIELE</div><div class="empty-sub">Tippe das ♥ auf einer Spielkarte</div></div>';}
 
 function tplLoading(){return '<div class="loading"><div class="spin"></div><div class="load-txt">LADE RELEASES&hellip;</div></div>';}
 
@@ -455,7 +486,9 @@ function tplGrid(){
       ?'<img class="c-img" src="'+g.background_image+'" alt="" loading="lazy">'
       :'<div class="c-ph">' + CTRL_IMG + '</div>';
     const score=g.metacritic?'<div class="c-score '+scoreCls(g.metacritic)+'">'+g.metacritic+'</div>':'';
+    const wished=isWished(g.id);
     return '<div class="card'+(hasImg?'':' card-noimg')+'" data-id="'+g.id+'">'+img+
+      '<button class="wish-btn'+(wished?' wished':'')+'" data-id="'+g.id+'">♥</button>'+
       '<div class="c-body">'+
         '<div class="c-title">'+g.name+'</div>'+
         '<div class="c-date">'+fmtDate(g.released)+'</div>'+
@@ -552,6 +585,11 @@ function bindMain(){
       openSheetEl();renderSheet();loadDetail(id);
     });
   });
+  document.querySelectorAll('.wish-btn').forEach(b=>{b.addEventListener('click',e=>{
+    const id=parseInt(b.dataset.id);
+    const g=S.games.find(x=>x.id===id)||S.wishlist.find(x=>x.id===id);
+    if(g)toggleWish(g,e);
+  });});
   document.getElementById('mehr-btn')?.addEventListener('click',loadMore);
   document.getElementById('inst-btn')?.addEventListener('click',()=>{
     S.installPrompt?.prompt();
