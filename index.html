@@ -345,7 +345,7 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();S.installPr
 
 async function loadGames(){
   if(!S.key)return;
-  S.loading=true;render();
+  S.loading=true;S.nextPage=null;S.loadingMore=false;render();
   const now=new Date(),td=now.toISOString().split('T')[0];
   let dates,order;
   if(S.tab==='new'){const p=new Date(now);p.setDate(p.getDate()-120);dates=p.toISOString().split('T')[0]+','+td;order='-released';}
